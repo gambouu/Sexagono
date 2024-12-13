@@ -2,6 +2,7 @@ package edu.upc.epsevg.prop.hex;
 
 import edu.upc.epsevg.prop.hex.players.HumanPlayer;
 import edu.upc.epsevg.prop.hex.players.RandomPlayer;
+import edu.upc.epsevg.prop.hex.players.Sexagono;
 import edu.upc.epsevg.prop.hex.IPlayer;
 import edu.upc.epsevg.prop.hex.IPlayer;
 import edu.upc.epsevg.prop.hex.IPlayer;
@@ -27,9 +28,9 @@ public class Game {
                 
                 IPlayer player1 = new H_E_X_Player(2/*GB*/);
                 
-                IPlayer player2 = new HumanPlayer("Human");
+                IPlayer player2 = new Sexagono("1");
                                 
-                new Board(player1 , player2, 11 /*mida*/,  10/*s*/, false);
+                new Board(player1 , player2, 7 /*mida*/,  10/*s*/, false);
              }
         });
     }
