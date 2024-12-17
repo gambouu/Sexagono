@@ -115,7 +115,7 @@ public class Sexagono implements IPlayer, IAuto {
      */
     private int evaluateBoard(HexGameStatus s) {
         if (s.isGameOver()) {
-            if (s.GetWinner() == s.getCurrentPlayer()) {
+            if (s.GetWinner() != s.getCurrentPlayer()) {
                 return Integer.MIN_VALUE; // Victoria del jugador actual
             } else {
                 return Integer.MAX_VALUE; // Derrota del jugador actual
