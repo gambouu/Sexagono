@@ -19,6 +19,7 @@ public class Sexagono implements IPlayer, IAuto {
 
     private final int MAX_DEPTH;
     private long expandedNodes;
+    private PlayerType player;
 
     public Sexagono(int depth) {
         this.MAX_DEPTH = depth;
@@ -34,6 +35,7 @@ public class Sexagono implements IPlayer, IAuto {
         expandedNodes = 0;
         Point bestMove = null;
         int bestValue = Integer.MIN_VALUE;
+        this.player = s.getCurrentPlayer();
 
         // Obtener movimientos válidos (casillas libres)
         List<MoveNode> moves = s.getMoves();
@@ -52,13 +54,12 @@ public class Sexagono implements IPlayer, IAuto {
             expandedNodes++;
 
             int value = minimax(copiaTablero, MAX_DEPTH - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
-            
-            if (value > bestValue) {
+            System.out.println(value);
+            if (value >= bestValue) {
                 bestValue = value;
                 bestMove = currentPoint;
-            }
+            }       
         }
-
         return new PlayerMove(bestMove, expandedNodes, MAX_DEPTH, SearchType.MINIMAX);
     }
 
@@ -66,27 +67,31 @@ public class Sexagono implements IPlayer, IAuto {
      * Minimax con poda Alfa-Beta.
      */
     private int minimax(HexGameStatus s, int depth, int alpha, int beta, boolean isMaximizing) {
-        
-        if (evaluateBoard(s) != 0) {
+        // Condición de parada: juego terminado o profundidad máxima alcanzada
+        if (s.isGameOver() || depth == 0) {
             return evaluateBoard(s);
         }
 
+        // Obtener movimientos válidos
         List<MoveNode> moves = s.getMoves();
+
         if (isMaximizing) {
             int maxEval = Integer.MIN_VALUE;
             for (MoveNode move : moves) {
                 Point currentPoint = move.getPoint();
 
-                if (s.getPos(currentPoint) != 0) {
-                    continue; // Ignora posiciones ocupadas
-                }
-                HexGameStatus copiaTablero = new HexGameStatus(s); // Guarda el valor original
-                copiaTablero.placeStone(currentPoint); // Simula el movimiento
+                // Simular movimiento
+                HexGameStatus copiaTablero = new HexGameStatus(s);
+                copiaTablero.placeStone(currentPoint);
                 expandedNodes++;
-                int eval = minimax(s, depth - 1, alpha, beta, false);
+
+                // Llamada recursiva
+                int eval = minimax(copiaTablero, depth - 1, alpha, beta, false);
                 maxEval = Math.max(maxEval, eval);
+
+                // Poda Alfa-Beta
                 alpha = Math.max(alpha, eval);
-                if (beta <= alpha) break; // Poda Beta
+                if (beta <= alpha) break;
             }
             return maxEval;
         } else {
@@ -94,31 +99,33 @@ public class Sexagono implements IPlayer, IAuto {
             for (MoveNode move : moves) {
                 Point currentPoint = move.getPoint();
 
-                if (s.getPos(currentPoint) != 0) {
-                    continue; // Ignora posiciones ocupadas
-                }
-                
-                HexGameStatus copiaTablero = new HexGameStatus(s); // Guarda el valor original
-                copiaTablero.placeStone(currentPoint); // Simula el movimiento
+                // Simular movimiento
+                HexGameStatus copiaTablero = new HexGameStatus(s);
+                copiaTablero.placeStone(currentPoint);
                 expandedNodes++;
-                int eval = minimax(s, depth - 1, alpha, beta, true);
+
+                // Llamada recursiva
+                int eval = minimax(copiaTablero, depth - 1, alpha, beta, true);
                 minEval = Math.min(minEval, eval);
+
+                // Poda Alfa-Beta
                 beta = Math.min(beta, eval);
-                if (beta <= alpha) break; // Poda Alfa
+                if (beta <= alpha) break;
             }
             return minEval;
         }
     }
+
 
     /**
      * Evalúa el tablero sin heurística, solo busca si hay ganador.
      */
     private int evaluateBoard(HexGameStatus s) {
         if (s.isGameOver()) {
-            if (s.GetWinner() != s.getCurrentPlayer()) {
-                return Integer.MIN_VALUE; // Victoria del jugador actual
+            if (s.GetWinner() != player) {
+                return Integer.MIN_VALUE;
             } else {
-                return Integer.MAX_VALUE; // Derrota del jugador actual
+                return Integer.MAX_VALUE;
             }
         }
         return 0; // Tablero no terminado
