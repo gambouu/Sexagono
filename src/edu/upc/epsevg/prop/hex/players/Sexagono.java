@@ -35,7 +35,7 @@ public class Sexagono implements IPlayer, IAuto {
         expandedNodes = 0;
         Point bestMove = null;
         int bestValue = Integer.MIN_VALUE;
-        this.player = s.getCurrentPlayer();
+        player = s.getCurrentPlayer();
 
         // Obtener movimientos válidos (casillas libres)
         List<MoveNode> moves = s.getMoves();
@@ -55,11 +55,13 @@ public class Sexagono implements IPlayer, IAuto {
 
             int value = minimax(copiaTablero, MAX_DEPTH - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
             System.out.println(value);
+            
             if (value >= bestValue) {
                 bestValue = value;
                 bestMove = currentPoint;
             }       
         }
+
         return new PlayerMove(bestMove, expandedNodes, MAX_DEPTH, SearchType.MINIMAX);
     }
 
@@ -116,16 +118,15 @@ public class Sexagono implements IPlayer, IAuto {
         }
     }
 
-
     /**
      * Evalúa el tablero sin heurística, solo busca si hay ganador.
      */
     private int evaluateBoard(HexGameStatus s) {
         if (s.isGameOver()) {
-            if (s.GetWinner() != player) {
-                return Integer.MIN_VALUE;
-            } else {
+            if (s.GetWinner() == player) {
                 return Integer.MAX_VALUE;
+            } else {
+                return Integer.MIN_VALUE;
             }
         }
         return 0; // Tablero no terminado
