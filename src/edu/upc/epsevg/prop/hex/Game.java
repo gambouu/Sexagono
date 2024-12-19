@@ -28,11 +28,11 @@ public class Game {
                 
                 IPlayer player2 = new H_E_X_Player(2/*GB*/);
                 
-                IPlayer player1 = new Sexagono(5, false);
+                IPlayer player1 = new Sexagono(6, false);
                 
                 IPlayer player3 = new HumanPlayer("Pepe"); 
                                 
-                new Board(player3, player1, 5 /*mida*/,  10/*s*/, false);
+                new Board(player1, player3, 5 /*mida*/,  10/*s*/, false);
              }
         });
     }

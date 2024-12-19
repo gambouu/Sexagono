@@ -38,62 +38,71 @@ public class Sexagono implements IPlayer, IAuto {
     public PlayerMove move(HexGameStatus s) {
         expandedNodes = 0;
         int bestValue = Integer.MIN_VALUE;
+        int prof = 1;
         player = s.getCurrentPlayer();
         List<MoveNode> moves = s.getMoves();
-        Point bestMove = moves.isEmpty() ? null : moves.get(0).getPoint();
-
-        if (!useTimeout) {
-            
+        Point bestMove = null; 
+        
+        if (!useTimeout) { 
             for (MoveNode move : moves) {
-                Point currentPoint = move.getPoint();
-
-                HexGameStatus copiaTablero = new HexGameStatus(s); // Guarda el valor original
-                copiaTablero.placeStone(currentPoint); // Simula el movimiento
-
+               
+                if (bestMove == null) 
+                    bestMove = moves.get(0).getPoint();
+                
+                HexGameStatus copiaTablero = new HexGameStatus(s); 
+                copiaTablero.placeStone(move.getPoint()); 
+                
+                if (copiaTablero.isGameOver())
+                    return new PlayerMove(move.getPoint(), expandedNodes, MAX_DEPTH, SearchType.MINIMAX);
+                
                 int value = minimax(copiaTablero, MAX_DEPTH - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
                 System.out.println(value);
 
                 if (value > bestValue) {
                     bestValue = value;
-                    bestMove = currentPoint;
+                    bestMove = move.getPoint();
                 }       
             }
         }
         
         else  {
-            int depth = 1; // Profundidad inicial para IDS
             
-            while (!timeout) {
+            while (!timeout) {      
                 for (MoveNode move : moves) {
-                    Point currentPoint = move.getPoint();
-                    HexGameStatus copiaTablero = new HexGameStatus(s);
-                    copiaTablero.placeStone(currentPoint);
-
-                    int value = minimax(copiaTablero, depth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
-                    System.out.println(value);
                     
+                    if (bestMove == null) 
+                        bestMove = moves.get(0).getPoint();
+                    
+                    HexGameStatus copiaTablero = new HexGameStatus(s);
+                    copiaTablero.placeStone(move.getPoint());
+                   
+                    if (copiaTablero.isGameOver())
+                        return new PlayerMove(move.getPoint(), expandedNodes, prof, SearchType.MINIMAX_IDS);
+                                        
+                    int value = minimax(copiaTablero, prof, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
+                    System.out.println(value);
+              
                     if (value > bestValue) {
                         bestValue = value;
-                        bestMove = currentPoint;
+                        bestMove = move.getPoint();
                     }
                 }
-                
-                depth++; // Incrementar la profundidad
-            }
-            
+                prof++; 
+            }         
         }
+        
         timeout = false;
         return new PlayerMove(bestMove, expandedNodes, MAX_DEPTH, useTimeout ? SearchType.MINIMAX_IDS: SearchType.MINIMAX);
     }
 
     /**
      * Minimax con poda Alfa-Beta.
-     */
+    */
     private int minimax(HexGameStatus s, int depth, int alpha, int beta, boolean isMaximizing) {
         
         expandedNodes++;
 
-        if (timeout || s.isGameOver() || depth == 0) 
+        if (timeout || depth == 0) 
             return 0;
         
         List<MoveNode> moves = s.getMoves();
@@ -103,18 +112,15 @@ public class Sexagono implements IPlayer, IAuto {
             for (MoveNode move : moves) {
                
                 if (timeout) break;
-                
-                // Simular movimiento
+               
                 HexGameStatus copiaTablero = new HexGameStatus(s);
                 copiaTablero.placeStone(move.getPoint());
                 
                 if (copiaTablero.isGameOver())
                     return Integer.MAX_VALUE;
-                
-                // Llamada recursiva
+                           
                 maxEval = Math.max(maxEval, minimax(copiaTablero, depth - 1, alpha, beta, false));
-
-                // Poda Alfa-Beta
+                
                 if (beta <= maxEval) return maxEval;
                 alpha = Math.max(alpha, maxEval);
 
@@ -128,17 +134,14 @@ public class Sexagono implements IPlayer, IAuto {
                 
                 if (timeout) break;
                 
-                // Simular movimiento
                 HexGameStatus copiaTablero = new HexGameStatus(s);
                 copiaTablero.placeStone(move.getPoint());
                 
                 if (copiaTablero.isGameOver())
                     return Integer.MIN_VALUE;
                 
-                // Llamada recursiva
                 minEval = Math.min(minEval, minimax(copiaTablero, depth - 1, alpha, beta, true));
 
-                // Poda Alfa-Beta
                 if (minEval <= alpha) return minEval;
                 beta = Math.min(beta, minEval);
             }
