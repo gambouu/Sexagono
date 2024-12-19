@@ -20,120 +20,134 @@ public class Sexagono implements IPlayer, IAuto {
     private final int MAX_DEPTH;
     private long expandedNodes;
     private PlayerType player;
-
-    public Sexagono(int depth) {
+    private boolean timeout = false;
+    private final boolean useTimeout;
+    
+    public Sexagono(int depth, boolean useTimeout) {
         this.MAX_DEPTH = depth;
+        this.useTimeout = useTimeout;
     }
 
     @Override
     public void timeout() {
-        // Sin manejo de timeout
+        System.out.println("He saltao primiko");
+        timeout = !timeout;
     }
 
     @Override
     public PlayerMove move(HexGameStatus s) {
         expandedNodes = 0;
-        Point bestMove = null;
         int bestValue = Integer.MIN_VALUE;
         player = s.getCurrentPlayer();
-
-        // Obtener movimientos válidos (casillas libres)
         List<MoveNode> moves = s.getMoves();
+        Point bestMove = moves.isEmpty() ? null : moves.get(0).getPoint();
 
-        for (MoveNode move : moves) {
+        if (!useTimeout) {
             
-            Point currentPoint = move.getPoint();
+            for (MoveNode move : moves) {
+                Point currentPoint = move.getPoint();
 
-            // Verificar si la posición está ocupada antes de colocar
-            if (s.getPos(currentPoint) != 0) {
-                continue; // Si la posición no está vacía, la ignoramos
+                HexGameStatus copiaTablero = new HexGameStatus(s); // Guarda el valor original
+                copiaTablero.placeStone(currentPoint); // Simula el movimiento
+
+                int value = minimax(copiaTablero, MAX_DEPTH - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
+                System.out.println(value);
+
+                if (value > bestValue) {
+                    bestValue = value;
+                    bestMove = currentPoint;
+                }       
+            }
+        }
+        
+        else  {
+            int depth = 1; // Profundidad inicial para IDS
+            
+            while (!timeout) {
+                for (MoveNode move : moves) {
+                    Point currentPoint = move.getPoint();
+                    HexGameStatus copiaTablero = new HexGameStatus(s);
+                    copiaTablero.placeStone(currentPoint);
+
+                    int value = minimax(copiaTablero, depth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
+                    System.out.println(value);
+                    
+                    if (value > bestValue) {
+                        bestValue = value;
+                        bestMove = currentPoint;
+                    }
+                }
+                
+                depth++; // Incrementar la profundidad
             }
             
-            HexGameStatus copiaTablero = new HexGameStatus(s); // Guarda el valor original
-            copiaTablero.placeStone(currentPoint); // Simula el movimiento
-            expandedNodes++;
-
-            int value = minimax(copiaTablero, MAX_DEPTH - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
-            System.out.println(value);
-            
-            if (value >= bestValue) {
-                bestValue = value;
-                bestMove = currentPoint;
-            }       
         }
-
-        return new PlayerMove(bestMove, expandedNodes, MAX_DEPTH, SearchType.MINIMAX);
+        timeout = false;
+        return new PlayerMove(bestMove, expandedNodes, MAX_DEPTH, useTimeout ? SearchType.MINIMAX_IDS: SearchType.MINIMAX);
     }
 
     /**
      * Minimax con poda Alfa-Beta.
      */
     private int minimax(HexGameStatus s, int depth, int alpha, int beta, boolean isMaximizing) {
-        // Condición de parada: juego terminado o profundidad máxima alcanzada
-        if (s.isGameOver() || depth == 0) {
-            return evaluateBoard(s);
-        }
+        
+        expandedNodes++;
 
-        // Obtener movimientos válidos
+        if (timeout || s.isGameOver() || depth == 0) 
+            return 0;
+        
         List<MoveNode> moves = s.getMoves();
 
         if (isMaximizing) {
             int maxEval = Integer.MIN_VALUE;
             for (MoveNode move : moves) {
-                Point currentPoint = move.getPoint();
-
+               
+                if (timeout) break;
+                
                 // Simular movimiento
                 HexGameStatus copiaTablero = new HexGameStatus(s);
-                copiaTablero.placeStone(currentPoint);
-                expandedNodes++;
-
+                copiaTablero.placeStone(move.getPoint());
+                
+                if (copiaTablero.isGameOver())
+                    return Integer.MAX_VALUE;
+                
                 // Llamada recursiva
-                int eval = minimax(copiaTablero, depth - 1, alpha, beta, false);
-                maxEval = Math.max(maxEval, eval);
+                maxEval = Math.max(maxEval, minimax(copiaTablero, depth - 1, alpha, beta, false));
 
                 // Poda Alfa-Beta
-                alpha = Math.max(alpha, eval);
-                if (beta <= alpha) break;
+                if (beta <= maxEval) return maxEval;
+                alpha = Math.max(alpha, maxEval);
+
             }
             return maxEval;
-        } else {
+        } 
+        
+        else {
             int minEval = Integer.MAX_VALUE;
             for (MoveNode move : moves) {
-                Point currentPoint = move.getPoint();
-
+                
+                if (timeout) break;
+                
                 // Simular movimiento
                 HexGameStatus copiaTablero = new HexGameStatus(s);
-                copiaTablero.placeStone(currentPoint);
-                expandedNodes++;
-
+                copiaTablero.placeStone(move.getPoint());
+                
+                if (copiaTablero.isGameOver())
+                    return Integer.MIN_VALUE;
+                
                 // Llamada recursiva
-                int eval = minimax(copiaTablero, depth - 1, alpha, beta, true);
-                minEval = Math.min(minEval, eval);
+                minEval = Math.min(minEval, minimax(copiaTablero, depth - 1, alpha, beta, true));
 
                 // Poda Alfa-Beta
-                beta = Math.min(beta, eval);
-                if (beta <= alpha) break;
+                if (minEval <= alpha) return minEval;
+                beta = Math.min(beta, minEval);
             }
             return minEval;
         }
     }
 
-    /**
-     * Evalúa el tablero sin heurística, solo busca si hay ganador.
-     */
-    private int evaluateBoard(HexGameStatus s) {
-        if (s.isGameOver()) {
-            if (s.GetWinner() == player) {
-                return Integer.MAX_VALUE;
-            } else {
-                return Integer.MIN_VALUE;
-            }
-        }
-        return 0; // Tablero no terminado
-    }
-
     @Override
     public String getName() {
-        return "Sexagono-Minimax-AlphaBeta";
+        return "Sexagono";
     }
 }

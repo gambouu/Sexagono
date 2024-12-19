@@ -28,7 +28,7 @@ public class Game {
                 
                 IPlayer player2 = new H_E_X_Player(2/*GB*/);
                 
-                IPlayer player1 = new Sexagono(5);
+                IPlayer player1 = new Sexagono(5, false);
                 
                 IPlayer player3 = new HumanPlayer("Pepe"); 
                                 
