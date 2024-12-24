@@ -10,6 +10,7 @@ import edu.upc.epsevg.prop.hex.PlayerType;
 import edu.upc.epsevg.prop.hex.players.ProfeGameStatus2;
 import edu.upc.epsevg.prop.hex.players.ProfeGameStatus3;
 import edu.upc.epsevg.prop.hex.players.ProfeGameStatus3.Result;
+import edu.upc.epsevg.prop.hex.players.Sexagono;
 /**
  *
  * @author bernat
@@ -36,8 +37,8 @@ public class UnitTesting {
 
 
         HexGameStatus gs = new HexGameStatus(board, PlayerType.PLAYER1);        
-        
- 
+        int result = Sexagono.dijkstra(gs, PlayerType.PLAYER1);
+        System.out.println(result);
     }
     
 }
