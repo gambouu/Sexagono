@@ -293,13 +293,9 @@ public class Sexagono implements IPlayer, IAuto {
         int x = currentNode.getPoint().x;
         int y = currentNode.getPoint().y;
         int size = s.getSize();
-        if((x > 1 && y > 1) && (x < size - 1 && y < size - 1)){
-            
-            
-            
-        }
+
         //CASO PARA X = 0
-        else if(x == 0){
+        if(x == 0){
             if(y == 0){
             
                 Point p1 = new Point(x+1, y+1);
