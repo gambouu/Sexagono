@@ -238,7 +238,6 @@ public class Sexagono implements IPlayer, IAuto {
             Node currentNode = pQueue.poll();
             //System.out.println(currentNode.dist);
             
-            
             if (visitados.contains(currentNode)) 
                 continue;
                    
@@ -253,6 +252,9 @@ public class Sexagono implements IPlayer, IAuto {
             }
             
             ArrayList<Point> vecinos = s.getNeigh(currentNode.point);
+            ArrayList<Point> bridges = null;
+            //Afegir els ponts a la llista vecinos
+            addBridges(s, bridges, currentNode);
             for (Point vecino : vecinos) {
                 //System.out.println(vecino);
                 int vecinoCost = Integer.MAX_VALUE;
@@ -277,6 +279,272 @@ public class Sexagono implements IPlayer, IAuto {
 
         return Integer.MAX_VALUE;
         
+    }
+    
+    private void addBridges(HexGameStatus s, ArrayList<Point> bridges, Node currentNode){
+    
+        // Posiciones relativas de los bridges
+        // [x-2, y+1]
+        // [x+2, y-1]
+        // [x+1, y+1]
+        // [x-1, y-1]
+        // [x+1, y-2]
+        // [x-1, y+2]
+        int x = currentNode.getPoint().x;
+        int y = currentNode.getPoint().y;
+        int size = s.getSize();
+        if((x > 1 && y > 1) && (x < size - 1 && y < size - 1)){
+            
+            
+            
+        }
+        //CASO PARA X = 0
+        else if(x == 0){
+            if(y == 0){
+            
+                Point p1 = new Point(x+1, y+1);
+                bridges.add(p1);
+            
+            } else if (y == 1){
+            
+                Point p1 = new Point(x+1, y+1);
+                Point p2 = new Point(x+2, y-1);
+                bridges.add(p1);
+                bridges.add(p2);
+                
+            } else if (y == size){
+            
+                Point p1 = new Point(x+2, y-1);
+                Point p2 = new Point(x+1, y-2);
+                bridges.add(p1);
+                bridges.add(p2);
+            
+            } else {
+            
+                Point p1 = new Point(x+1, y+1);
+                Point p2 = new Point(x+2, y-1);
+                Point p3 = new Point(x+1, y-2);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+            
+            }
+
+        }
+        //CASO PARA X = 1
+        else if(x == 1){
+            if(y == 0){
+            
+                Point p1 = new Point(x+1, y+1);
+                Point p2 = new Point(x-1, y+2);
+                bridges.add(p1);
+                bridges.add(p2);
+            
+            } else if (y == 1){
+            
+                Point p1 = new Point(x+1, y+1);
+                Point p2 = new Point(x-1, y+2);
+                Point p3 = new Point(x+2, y-1);
+                Point p4 = new Point(x+1, y+1);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+                bridges.add(p4);
+                
+            } else if (y == size){
+            
+                Point p1 = new Point(x-1, y-1);
+                Point p2 = new Point(x+1, y-2);
+                Point p3 = new Point(x+2, y-1);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+            
+            } else if (y == size - 1){
+            
+                Point p1 = new Point(x-1, y-1);
+                Point p2 = new Point(x+1, y-2);
+                Point p3 = new Point(x+2, y-1);
+                Point p4 = new Point(x+1, y+1);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+                bridges.add(p4);
+            
+            } else {
+            
+                Point p1 = new Point(x-1, y-1);
+                Point p2 = new Point(x+1, y-2);
+                Point p3 = new Point(x+2, y-1);
+                Point p4 = new Point(x+1, y+1);
+                Point p5 = new Point(x-1, y+2);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+                bridges.add(p4);
+                bridges.add(p5);
+            
+            }
+        }
+        //CASO PARA Y = 0
+        else if(y == 0){
+            if(x == size){
+            
+                Point p1 = new Point(x-2, y+1);
+                Point p2 = new Point(x-1, y+2);
+                bridges.add(p1);
+                bridges.add(p2);
+            
+            } else {
+            
+                Point p1 = new Point(x+1, y+1);
+                Point p2 = new Point(x-1, y+2);
+                Point p3 = new Point(x-2, y+1);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+
+            }
+        }
+        //CASO PARA Y = 1
+        else if(y == 1){
+            if(x == size){
+            
+                Point p1 = new Point(x-1, y-1);
+                Point p2 = new Point(x-1, y+2);
+                Point p3 = new Point(x-2, y+1);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+            
+            } else if(x == size - 1){
+            
+                Point p1 = new Point(x+1, y+1);
+                Point p2 = new Point(x-1, y+2);
+                Point p3 = new Point(x-2, y+1);
+                Point p4 = new Point(x-1, y-1);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+                bridges.add(p4);
+
+            } else {
+            
+                Point p1 = new Point(x-1, y-1);
+                Point p2 = new Point(x-2, y+1);
+                Point p3 = new Point(x+2, y-1);
+                Point p4 = new Point(x+1, y+1);
+                Point p5 = new Point(x-1, y+2);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+                bridges.add(p4);
+                bridges.add(p5);
+            
+            }
+        }
+        //CASO PARA X = SIZE
+        else if(x == size){
+            if(y == size){
+            
+                Point p1 = new Point(x-1, y-1);
+                bridges.add(p1);
+            
+            } else if (y == size - 1){
+            
+                Point p1 = new Point(x-1, y-1);
+                Point p2 = new Point(x-2, y+1);
+                bridges.add(p1);
+                bridges.add(p2);
+                
+            } else {
+            
+                Point p1 = new Point(x-1, y-1);
+                Point p2 = new Point(x-2, y+1);
+                Point p3 = new Point(x-1, y+2);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+            
+            }
+        }
+        //CASO PARA X = SIZE - 1
+        else if(x == size - 1){
+            if(y == size){
+            
+                Point p1 = new Point(x-1, y-1);
+                Point p2 = new Point(x+1, y-2);
+                bridges.add(p1);
+                bridges.add(p2);
+            
+            } else if (y == size - 1){
+            
+                Point p1 = new Point(x-1, y-1);
+                Point p2 = new Point(x+1, y-2);
+                Point p3 = new Point(x-2, y+1);
+                Point p4 = new Point(x+1, y+1);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+                bridges.add(p4);
+                
+            } else {
+            
+                Point p1 = new Point(x-1, y-1);
+                Point p2 = new Point(x-2, y+1);
+                Point p3 = new Point(x-2, y+1);
+                Point p4 = new Point(x+1, y+1);
+                Point p5 = new Point(x-1, y+2);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+                bridges.add(p4);
+                bridges.add(p5);
+            
+            }
+        }
+        // CASO PARA Y = SIZE
+        else if(y == size){
+            
+                Point p1 = new Point(x-1, y-1);
+                Point p2 = new Point(x+1, y-2);
+                Point p3 = new Point(x+2, y-1);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+            
+        }
+        // CASO PARA Y = SIZE - 1
+        else if(y == size - 1){
+            
+                Point p1 = new Point(x-1, y-1);
+                Point p2 = new Point(x+1, y-2);
+                Point p3 = new Point(x+2, y-1);
+                Point p4 = new Point(x+1, y+1);
+                Point p5 = new Point(x-2, y+1);
+                bridges.add(p1);
+                bridges.add(p2);
+                bridges.add(p3);
+                bridges.add(p4);
+                bridges.add(p5);
+            
+        }
+        else {
+        
+            Point p1 = new Point(x-2, y+1);
+            Point p2 = new Point(x+2, y-1);
+            Point p3 = new Point(x+1, y+1);
+            Point p4 = new Point(x-1, y-1);
+            Point p5 = new Point(x+1, y-2);
+            Point p6 = new Point(x-1, y+2);
+            bridges.add(p1);
+            bridges.add(p2);
+            bridges.add(p3);
+            bridges.add(p4);
+            bridges.add(p5);
+            bridges.add(p6);
+        
+        }
     }
 
     @Override
