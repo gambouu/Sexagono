@@ -8,6 +8,7 @@ import edu.upc.epsevg.prop.hex.SearchType;
 import edu.upc.epsevg.prop.hex.PlayerType;
 import edu.upc.epsevg.prop.hex.MoveNode;
 import static edu.upc.epsevg.prop.hex.PlayerType.getColor;
+import static edu.upc.epsevg.prop.hex.PlayerType.opposite;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -149,15 +150,13 @@ public class Sexagono implements IPlayer, IAuto {
     
     private int evaluateHeuristica(HexGameStatus s) {
         
-        myPlayer = s.getCurrentPlayer();
-        if (myPlayer == PlayerType.PLAYER1) otherPlayer = PlayerType.PLAYER2;
-        else otherPlayer = PlayerType.PLAYER1;
+        PlayerType currentPlayer = s.getCurrentPlayer();
+        PlayerType opponentPlayer = opposite(currentPlayer);
 
         // Conectividad: Es la ruta más corta al destino
-        int myDistance = dijkstra(s, myPlayer);
-        System.out.println(myDistance);
-        int opponentDistance = dijkstra(s, otherPlayer);
-        int connectivityScore = myDistance - opponentDistance;
+        int myDistance = dijkstra(s, currentPlayer);
+        int opponentDistance = dijkstra(s, opponentPlayer);
+        int connectivityScore = opponentDistance - myDistance; // ESTA FUNCIONA
 
         // Fórmula final de la heurística
         return connectivityScore;
@@ -229,8 +228,8 @@ public class Sexagono implements IPlayer, IAuto {
             
             ArrayList<Point> vecinos = s.getNeigh(currentNode.point);
             int numVecinos = vecinos.size();
-            int i = 0;
-            //addBridges(s, vecinos, currentNode);
+            //int i = 0;
+            addBridges(s, vecinos, currentNode);
             for (Point vecino : vecinos) {
                 int vecinoCost = Integer.MAX_VALUE;
                 int cellStatus = s.getPos(vecino);
@@ -252,7 +251,6 @@ public class Sexagono implements IPlayer, IAuto {
                         pQueue.add(newNode); // Añadirlo a la cola
                     } 
                 }
- 
         }
         
         return Integer.MAX_VALUE;
