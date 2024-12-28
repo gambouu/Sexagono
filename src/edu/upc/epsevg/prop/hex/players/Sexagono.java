@@ -174,7 +174,6 @@ public class Sexagono implements IPlayer, IAuto {
         int myDistance = dijkstra(s, currentPlayer);
         int opponentDistance = dijkstra(s, opponentPlayer);
         
-        System.out.println(opponentDistance - myDistance);
         return (opponentDistance - myDistance);
         
         //Bloquear: Tapar al oponente para que no pueda ganar
@@ -196,7 +195,7 @@ public class Sexagono implements IPlayer, IAuto {
         
         int[][] distancias = new int[s.getSize()][s.getSize()];
         PriorityQueue<Node> pQueue = new PriorityQueue<>((a, b) -> Integer.compare(a.dist, b.dist));
-        Set<Node> visitados = new HashSet<>();
+        Node[][] visitados = new Node[s.getSize()][s.getSize()];
         
         for (int i = 0; i < s.getSize(); i++) {
             for (int j = 0; j < s.getSize(); j++) {
@@ -238,10 +237,10 @@ public class Sexagono implements IPlayer, IAuto {
             Node currentNode = pQueue.poll();
             //System.out.println(currentNode.dist);
             
-            if (visitados.contains(currentNode)) 
+            if (visitados[currentNode.getPoint().x][currentNode.getPoint().y] != null) 
                 continue;
                    
-            visitados.add(currentNode);
+            visitados[currentNode.getPoint().x][currentNode.getPoint().y] = currentNode;
            
             if (player == PlayerType.PLAYER1 && currentNode.point.x == s.getSize() - 1) { 
                 return currentNode.dist;
@@ -252,7 +251,7 @@ public class Sexagono implements IPlayer, IAuto {
             }
             
             ArrayList<Point> vecinos = s.getNeigh(currentNode.point);
-            ArrayList<Point> bridges = null;
+            ArrayList<Point> bridges = new ArrayList<>();
             //Afegir els ponts a la llista vecinos
             addBridges(s, bridges, currentNode);
             for (Point vecino : vecinos) {
@@ -261,10 +260,10 @@ public class Sexagono implements IPlayer, IAuto {
                 int cellStatus = s.getPos(vecino);
 
                 if (cellStatus == s.getCurrentPlayerColor()) 
-                    vecinoCost = 0; 
+                    vecinoCost = 2; 
              
                 else if (cellStatus == 0) 
-                    vecinoCost = 1;
+                    vecinoCost = 4;
                 
                 else
                     continue;
@@ -275,6 +274,26 @@ public class Sexagono implements IPlayer, IAuto {
                     pQueue.add(new Node(vecino, newCost));
                 }
             }
+            if(bridges != null){
+                for (Point bridge : bridges) {
+                    int vecinoCost;
+                    int cellStatus = s.getPos(bridge);
+
+                    if (cellStatus == s.getCurrentPlayerColor()) 
+                        vecinoCost = -4;
+                    else if (cellStatus == 0) 
+                        vecinoCost = -2;
+                    else
+                        continue;
+
+                    int newCost = distancias[bridge.x][bridge.y] + vecinoCost;
+
+                    if (newCost < distancias[bridge.x][bridge.y]) {
+                        distancias[bridge.x][bridge.y] = newCost;
+                    }
+                }
+            }
+            bridges.clear();
         }
 
         return Integer.MAX_VALUE;
@@ -308,7 +327,7 @@ public class Sexagono implements IPlayer, IAuto {
                 bridges.add(p1);
                 bridges.add(p2);
                 
-            } else if (y == size){
+            } else if (y == size - 1){
             
                 Point p1 = new Point(x+2, y-1);
                 Point p2 = new Point(x+1, y-2);
@@ -325,7 +344,6 @@ public class Sexagono implements IPlayer, IAuto {
                 bridges.add(p3);
             
             }
-
         }
         //CASO PARA X = 1
         else if(x == 1){
@@ -347,7 +365,7 @@ public class Sexagono implements IPlayer, IAuto {
                 bridges.add(p3);
                 bridges.add(p4);
                 
-            } else if (y == size){
+            } else if (y == size - 1){
             
                 Point p1 = new Point(x-1, y-1);
                 Point p2 = new Point(x+1, y-2);
@@ -356,7 +374,7 @@ public class Sexagono implements IPlayer, IAuto {
                 bridges.add(p2);
                 bridges.add(p3);
             
-            } else if (y == size - 1){
+            } else if (y == size - 2){
             
                 Point p1 = new Point(x-1, y-1);
                 Point p2 = new Point(x+1, y-2);
@@ -384,7 +402,7 @@ public class Sexagono implements IPlayer, IAuto {
         }
         //CASO PARA Y = 0
         else if(y == 0){
-            if(x == size){
+            if(x == size - 1){
             
                 Point p1 = new Point(x-2, y+1);
                 Point p2 = new Point(x-1, y+2);
@@ -404,7 +422,7 @@ public class Sexagono implements IPlayer, IAuto {
         }
         //CASO PARA Y = 1
         else if(y == 1){
-            if(x == size){
+            if(x == size - 1){
             
                 Point p1 = new Point(x-1, y-1);
                 Point p2 = new Point(x-1, y+2);
@@ -413,7 +431,7 @@ public class Sexagono implements IPlayer, IAuto {
                 bridges.add(p2);
                 bridges.add(p3);
             
-            } else if(x == size - 1){
+            } else if(x == size - 2){
             
                 Point p1 = new Point(x+1, y+1);
                 Point p2 = new Point(x-1, y+2);
@@ -440,13 +458,13 @@ public class Sexagono implements IPlayer, IAuto {
             }
         }
         //CASO PARA X = SIZE
-        else if(x == size){
-            if(y == size){
+        else if(x == size - 1){
+            if(y == size - 1){
             
                 Point p1 = new Point(x-1, y-1);
                 bridges.add(p1);
             
-            } else if (y == size - 1){
+            } else if (y == size - 2){
             
                 Point p1 = new Point(x-1, y-1);
                 Point p2 = new Point(x-2, y+1);
@@ -465,15 +483,15 @@ public class Sexagono implements IPlayer, IAuto {
             }
         }
         //CASO PARA X = SIZE - 1
-        else if(x == size - 1){
-            if(y == size){
+        else if(x == size - 2){
+            if(y == size - 1){
             
                 Point p1 = new Point(x-1, y-1);
                 Point p2 = new Point(x+1, y-2);
                 bridges.add(p1);
                 bridges.add(p2);
             
-            } else if (y == size - 1){
+            } else if (y == size - 2){
             
                 Point p1 = new Point(x-1, y-1);
                 Point p2 = new Point(x+1, y-2);
@@ -500,7 +518,7 @@ public class Sexagono implements IPlayer, IAuto {
             }
         }
         // CASO PARA Y = SIZE
-        else if(y == size){
+        else if(y == size - 1){
             
                 Point p1 = new Point(x-1, y-1);
                 Point p2 = new Point(x+1, y-2);
@@ -511,7 +529,7 @@ public class Sexagono implements IPlayer, IAuto {
             
         }
         // CASO PARA Y = SIZE - 1
-        else if(y == size - 1){
+        else if(y == size - 2){
             
                 Point p1 = new Point(x-1, y-1);
                 Point p2 = new Point(x+1, y-2);
@@ -540,7 +558,7 @@ public class Sexagono implements IPlayer, IAuto {
             bridges.add(p5);
             bridges.add(p6);
         
-        }
+        }        
     }
 
     @Override
@@ -548,7 +566,7 @@ public class Sexagono implements IPlayer, IAuto {
         return "Sexagono";
     }
     
-    private class Node {
+    public class Node {
         Point point; 
         int dist;    
 

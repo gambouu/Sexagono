@@ -17,8 +17,6 @@ import edu.upc.epsevg.prop.hex.players.Sexagono;
  */
 public class UnitTesting {
     
-    
-    
     public static void main(String[] args) {
     
         

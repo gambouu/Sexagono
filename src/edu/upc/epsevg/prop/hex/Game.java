@@ -31,6 +31,8 @@ public class Game {
                 IPlayer player2 = new Sexagono(0,true);
                 
                 IPlayer player3 = new HumanPlayer("Pepe"); 
+                
+                IPlayer player4 = new RandomPlayer("Pepe"); 
                                 
                 new Board(player2,player3, 7 /*mida*/,  10/*s*/, false);
              }
