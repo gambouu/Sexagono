@@ -12,6 +12,7 @@ import static edu.upc.epsevg.prop.hex.PlayerType.getColor;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -66,7 +67,7 @@ public class Sexagono implements IPlayer, IAuto {
                     return new PlayerMove(move.getPoint(), expandedNodes, MAX_DEPTH, SearchType.MINIMAX);
                 
                 int value = minimax(copiaTablero, MAX_DEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
-                //System.out.println(value);
+                System.out.println(value);
 
                 if (value > bestValue) {
                     bestValue = value;
@@ -90,7 +91,7 @@ public class Sexagono implements IPlayer, IAuto {
                         return new PlayerMove(move.getPoint(), expandedNodes, prof, SearchType.MINIMAX_IDS);
                                         
                     int value = minimax(copiaTablero, prof, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
-                    //System.out.println(value);
+                    System.out.println(value);
               
                     if (value > bestValue) {
                         bestValue = value;
@@ -112,9 +113,25 @@ public class Sexagono implements IPlayer, IAuto {
     private int minimax(HexGameStatus s, int depth, int alpha, int beta, boolean isMaximizing) {
         
         expandedNodes++;
+        PlayerType currentPlayer;
+        PlayerType opponentPlayer;
+        if(isMaximizing){
+        
+            currentPlayer = s.getCurrentPlayer();
+            if(currentPlayer == PlayerType.PLAYER1) opponentPlayer = PlayerType.PLAYER2;
+            else opponentPlayer = PlayerType.PLAYER1;
+        
+        }
+        else {
+        
+            opponentPlayer = s.getCurrentPlayer();
+            if(opponentPlayer == PlayerType.PLAYER1) currentPlayer = PlayerType.PLAYER2;
+            else currentPlayer = PlayerType.PLAYER1;
+        
+        }
 
         if (timeout || depth == 0) 
-            return evaluateHeuristica(s);
+            return evaluateHeuristica(s, currentPlayer, opponentPlayer);
         
         List<MoveNode> moves = s.getMoves();
 
@@ -160,38 +177,23 @@ public class Sexagono implements IPlayer, IAuto {
         }
     }
     
-    private int evaluateHeuristica(HexGameStatus s) {
-        // Jugador al que le toca mover en este estado
-
-        PlayerType currentPlayer = s.getCurrentPlayer();
-        PlayerType opponentPlayer;
-        if(myPlayer == PlayerType.PLAYER1) opponentPlayer = PlayerType.PLAYER2;
-        else opponentPlayer = PlayerType.PLAYER1;
-        
-        //heuristica = Conectividad + Bloquear + Centro + Flexibilidad
-        
-        //Conectividad: Es la ruta mas corta al destino
+    private int evaluateHeuristica(HexGameStatus s, PlayerType currentPlayer, PlayerType opponentPlayer) {
+        // Conectividad: Es la ruta más corta al destino
         int myDistance = dijkstra(s, currentPlayer);
         int opponentDistance = dijkstra(s, opponentPlayer);
+        int connectivityScore = 2 * (opponentDistance - myDistance);
         
-        return (opponentDistance - myDistance);
-        
-        //Bloquear: Tapar al oponente para que no pueda ganar
-        //Centro: Control del centro con pesos
-        //Flexibilidad: Cuantas opciones de expansión tiene en el proximo turno
-        //return heuristica
-        
-    }
-                
+        return connectivityScore;
+        //return (10 * connectivityScore) + (6 * blockScore) + (3 * centerScore) + (2 * flexibilityScore);
+    }       
     /*
     En el minimax se añade una pieza al tablero, en funcion de esa pieza colocada en el minimax se ejecuta el dijkstra
     SI la pieza une un bridge la puntuacion del camino baja, es decir será más facil llegar al final
     SI la pieza esta en un sitio random la puntuacion seguira siendo la misma y por tanto la puntuacion será la misma
 
     La funcion dijkstra siempre debe devolver el valor del camino mas pequeño
-
     */
-    private int dijkstra(HexGameStatus s, PlayerType player) {
+    public static int dijkstra(HexGameStatus s, PlayerType player) {
         
         int[][] distancias = new int[s.getSize()][s.getSize()];
         PriorityQueue<Node> pQueue = new PriorityQueue<>((a, b) -> Integer.compare(a.dist, b.dist));
@@ -214,6 +216,7 @@ public class Sexagono implements IPlayer, IAuto {
                 else if (s.getPos(p) == 0) {
                     distancias[0][i] = 1;
                     pQueue.add(new Node(p, 1));
+                    //pQueue.add(new Node(p, 1));
                 }
             }
         } 
@@ -228,6 +231,7 @@ public class Sexagono implements IPlayer, IAuto {
                 else if (s.getPos(p) == 0) {
                     distancias[i][0] = 1;
                     pQueue.add(new Node(p, 1));
+                    //pQueue.add(new Node(p, 1));
                 }
             }
         }
@@ -243,322 +247,146 @@ public class Sexagono implements IPlayer, IAuto {
             visitados[currentNode.getPoint().x][currentNode.getPoint().y] = currentNode;
            
             if (player == PlayerType.PLAYER1 && currentNode.point.x == s.getSize() - 1) { 
+                List<Point> path = reconstruirCamino(currentNode);
+                //System.out.println("Camino más corto: " + path);
                 return currentNode.dist;
             }
             
             else if (player == PlayerType.PLAYER2 && currentNode.point.y == s.getSize() - 1) {
+                List<Point> path = reconstruirCamino(currentNode);
+                //System.out.println("Camino más corto: " + path);
                 return currentNode.dist;       
             }
             
             ArrayList<Point> vecinos = s.getNeigh(currentNode.point);
-            ArrayList<Point> bridges = new ArrayList<>();
+            //ArrayList<Point> bridges = new ArrayList<>();
             //Afegir els ponts a la llista vecinos
-            addBridges(s, bridges, currentNode);
+            int numVecinos = vecinos.size();
+            int i = 0;
+            addBridges(s, vecinos, currentNode);
             for (Point vecino : vecinos) {
                 //System.out.println(vecino);
                 int vecinoCost = Integer.MAX_VALUE;
-                int cellStatus = s.getPos(vecino);
+                if(i < numVecinos){
+                    
+                    int cellStatus = s.getPos(vecino);
 
-                if (cellStatus == s.getCurrentPlayerColor()) 
-                    vecinoCost = 2; 
-             
-                else if (cellStatus == 0) 
-                    vecinoCost = 4;
+                    if (cellStatus == s.getCurrentPlayerColor()) 
+                        vecinoCost = 0; 
+
+                    else if (cellStatus == 0) 
+                        vecinoCost = 2;
+
+                    else
+                        continue;
                 
-                else
-                    continue;
+                }
+                else {
+                
+                    int cellStatus = s.getPos(vecino);
 
+                    if (cellStatus == s.getCurrentPlayerColor()) 
+                        vecinoCost = 0; 
+
+                    else if (cellStatus == 0) 
+                        vecinoCost = 1;
+
+                    else
+                        continue;              
+                
+                }
+                
                 int newCost = currentNode.dist + vecinoCost;
                 if (newCost < distancias[vecino.x][vecino.y]) {
                     distancias[vecino.x][vecino.y] = newCost;
-                    pQueue.add(new Node(vecino, newCost));
-                }
+                    Node newNode = new Node(vecino, newCost);
+                    newNode.parent = currentNode; // Asignar el parent correctamente
+                    pQueue.add(newNode); // Añadirlo a la cola
+                } 
+                i++;
             }
-            if(bridges != null){
-                for (Point bridge : bridges) {
-                    int vecinoCost;
-                    int cellStatus = s.getPos(bridge);
-
-                    if (cellStatus == s.getCurrentPlayerColor()) 
-                        vecinoCost = -4;
-                    else if (cellStatus == 0) 
-                        vecinoCost = -2;
-                    else
-                        continue;
-
-                    int newCost = distancias[bridge.x][bridge.y] + vecinoCost;
-
-                    if (newCost < distancias[bridge.x][bridge.y]) {
-                        distancias[bridge.x][bridge.y] = newCost;
-                    }
-                }
-            }
-            bridges.clear();
         }
 
         return Integer.MAX_VALUE;
         
     }
     
-    private void addBridges(HexGameStatus s, ArrayList<Point> bridges, Node currentNode){
-    
-        // Posiciones relativas de los bridges
-        // [x-2, y+1]
-        // [x+2, y-1]
-        // [x+1, y+1]
-        // [x-1, y-1]
-        // [x+1, y-2]
-        // [x-1, y+2]
+    private static void addBridges(HexGameStatus s, ArrayList<Point> bridges, Node currentNode) {
         int x = currentNode.getPoint().x;
         int y = currentNode.getPoint().y;
         int size = s.getSize();
 
-        //CASO PARA X = 0
-        if(x == 0){
-            if(y == 0){
-            
-                Point p1 = new Point(x+1, y+1);
-                bridges.add(p1);
-            
-            } else if (y == 1){
-            
-                Point p1 = new Point(x+1, y+1);
-                Point p2 = new Point(x+2, y-1);
-                bridges.add(p1);
-                bridges.add(p2);
-                
-            } else if (y == size - 1){
-            
-                Point p1 = new Point(x+2, y-1);
-                Point p2 = new Point(x+1, y-2);
-                bridges.add(p1);
-                bridges.add(p2);
-            
-            } else {
-            
-                Point p1 = new Point(x+1, y+1);
-                Point p2 = new Point(x+2, y-1);
-                Point p3 = new Point(x+1, y-2);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-            
-            }
-        }
-        //CASO PARA X = 1
-        else if(x == 1){
-            if(y == 0){
-            
-                Point p1 = new Point(x+1, y+1);
-                Point p2 = new Point(x-1, y+2);
-                bridges.add(p1);
-                bridges.add(p2);
-            
-            } else if (y == 1){
-            
-                Point p1 = new Point(x+1, y+1);
-                Point p2 = new Point(x-1, y+2);
-                Point p3 = new Point(x+2, y-1);
-                Point p4 = new Point(x+1, y+1);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-                bridges.add(p4);
-                
-            } else if (y == size - 1){
-            
-                Point p1 = new Point(x-1, y-1);
-                Point p2 = new Point(x+1, y-2);
-                Point p3 = new Point(x+2, y-1);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-            
-            } else if (y == size - 2){
-            
-                Point p1 = new Point(x-1, y-1);
-                Point p2 = new Point(x+1, y-2);
-                Point p3 = new Point(x+2, y-1);
-                Point p4 = new Point(x+1, y+1);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-                bridges.add(p4);
-            
-            } else {
-            
-                Point p1 = new Point(x-1, y-1);
-                Point p2 = new Point(x+1, y-2);
-                Point p3 = new Point(x+2, y-1);
-                Point p4 = new Point(x+1, y+1);
-                Point p5 = new Point(x-1, y+2);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-                bridges.add(p4);
-                bridges.add(p5);
-            
-            }
-        }
-        //CASO PARA Y = 0
-        else if(y == 0){
-            if(x == size - 1){
-            
-                Point p1 = new Point(x-2, y+1);
-                Point p2 = new Point(x-1, y+2);
-                bridges.add(p1);
-                bridges.add(p2);
-            
-            } else {
-            
-                Point p1 = new Point(x+1, y+1);
-                Point p2 = new Point(x-1, y+2);
-                Point p3 = new Point(x-2, y+1);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-
-            }
-        }
-        //CASO PARA Y = 1
-        else if(y == 1){
-            if(x == size - 1){
-            
-                Point p1 = new Point(x-1, y-1);
-                Point p2 = new Point(x-1, y+2);
-                Point p3 = new Point(x-2, y+1);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-            
-            } else if(x == size - 2){
-            
-                Point p1 = new Point(x+1, y+1);
-                Point p2 = new Point(x-1, y+2);
-                Point p3 = new Point(x-2, y+1);
-                Point p4 = new Point(x-1, y-1);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-                bridges.add(p4);
-
-            } else {
-            
-                Point p1 = new Point(x-1, y-1);
-                Point p2 = new Point(x-2, y+1);
-                Point p3 = new Point(x+2, y-1);
-                Point p4 = new Point(x+1, y+1);
-                Point p5 = new Point(x-1, y+2);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-                bridges.add(p4);
-                bridges.add(p5);
-            
-            }
-        }
-        //CASO PARA X = SIZE
-        else if(x == size - 1){
-            if(y == size - 1){
-            
-                Point p1 = new Point(x-1, y-1);
-                bridges.add(p1);
-            
-            } else if (y == size - 2){
-            
-                Point p1 = new Point(x-1, y-1);
-                Point p2 = new Point(x-2, y+1);
-                bridges.add(p1);
-                bridges.add(p2);
-                
-            } else {
-            
-                Point p1 = new Point(x-1, y-1);
-                Point p2 = new Point(x-2, y+1);
-                Point p3 = new Point(x-1, y+2);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-            
-            }
-        }
-        //CASO PARA X = SIZE - 1
-        else if(x == size - 2){
-            if(y == size - 1){
-            
-                Point p1 = new Point(x-1, y-1);
-                Point p2 = new Point(x+1, y-2);
-                bridges.add(p1);
-                bridges.add(p2);
-            
-            } else if (y == size - 2){
-            
-                Point p1 = new Point(x-1, y-1);
-                Point p2 = new Point(x+1, y-2);
-                Point p3 = new Point(x-2, y+1);
-                Point p4 = new Point(x+1, y+1);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-                bridges.add(p4);
-                
-            } else {
-            
-                Point p1 = new Point(x-1, y-1);
-                Point p2 = new Point(x-2, y+1);
-                Point p3 = new Point(x-2, y+1);
-                Point p4 = new Point(x+1, y+1);
-                Point p5 = new Point(x-1, y+2);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-                bridges.add(p4);
-                bridges.add(p5);
-            
-            }
-        }
-        // CASO PARA Y = SIZE
-        else if(y == size - 1){
-            
-                Point p1 = new Point(x-1, y-1);
-                Point p2 = new Point(x+1, y-2);
-                Point p3 = new Point(x+2, y-1);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-            
-        }
-        // CASO PARA Y = SIZE - 1
-        else if(y == size - 2){
-            
-                Point p1 = new Point(x-1, y-1);
-                Point p2 = new Point(x+1, y-2);
-                Point p3 = new Point(x+2, y-1);
-                Point p4 = new Point(x+1, y+1);
-                Point p5 = new Point(x-2, y+1);
-                bridges.add(p1);
-                bridges.add(p2);
-                bridges.add(p3);
-                bridges.add(p4);
-                bridges.add(p5);
-            
-        }
-        else {
+        // Posiciones relativas de los bridges
+        // A = [x-2, y+1]
+        // B = [x+2, y-1]
+        // C = [x+1, y+1]
+        // D = [x-1, y-1]
+        // E = [x+1, y-2]
+        // F = [x-1, y+2]
         
-            Point p1 = new Point(x-2, y+1);
-            Point p2 = new Point(x+2, y-1);
-            Point p3 = new Point(x+1, y+1);
-            Point p4 = new Point(x-1, y-1);
-            Point p5 = new Point(x+1, y-2);
-            Point p6 = new Point(x-1, y+2);
-            bridges.add(p1);
-            bridges.add(p2);
-            bridges.add(p3);
-            bridges.add(p4);
-            bridges.add(p5);
-            bridges.add(p6);
-        
-        }        
+        //Posibles bloqueos
+        // [x+1, y-1] --> E,B
+        // [x+1, y] --> B,C
+        // [x, y+1] --> C,F
+        // [x-1, y+1] --> F,A
+        // [x-1, y] --> A,D
+        // [x, y-1] --> D,E
+        // Si s.getPos(x,y) == -1; no añadir los puntos bloqueados
+
+        // Posiciones relativas de los bridges (A, B, C, D, E, F)
+        int[][] offsets = {
+            {-2, 1}, {2, -1}, {1, 1}, {-1, -1}, {1, -2}, {-1, 2}
+        };
+
+        // Posibles bloqueos y sus puntos asociados
+        int[][][] blocks = {
+            {{1, -1}, {1, -2}, {2, -1}},  // E, B
+            {{1, 0}, {2, -1}, {1, 1}},   // B, C
+            {{0, 1}, {1, 1}, {-1, 2}},   // C, F
+            {{-1, 1}, {-1, 2}, {-2, 1}}, // F, A
+            {{-1, 0}, {-2, 1}, {-1, -1}},// A, D
+            {{0, -1}, {-1, -1}, {1, -2}} // D, E
+        };
+
+        // Iterar sobre todos los offsets
+        for (int i = 0; i < offsets.length; i++) {
+            int newX = x + offsets[i][0];
+            int newY = y + offsets[i][1];
+
+            // Verificar si el punto está dentro de los límites del tablero
+            if (newX >= 0 && newX < size && newY >= 0 && newY < size) {
+                boolean blocked = false;
+
+                // Revisar las posiciones de bloqueo asociadas al punto
+                for (int[] block : blocks[i]) {
+                    int blockX = x + block[0];
+                    int blockY = y + block[1];
+
+                    // Si el bloque está dentro del tablero y está ocupado (-1), bloquea
+                    if (blockX >= 0 && blockX < size && blockY >= 0 && blockY < size) {
+                        if (s.getPos(blockX, blockY) == -1) {
+                            blocked = true;
+                            break; // No añadir este punto si está bloqueado
+                        }
+                    }
+                }
+
+                // Añadir el puente solo si no está bloqueado
+                if (!blocked) {
+                    bridges.add(new Point(newX, newY));
+                }
+            }
+        }
+    }
+
+    private static List<Point> reconstruirCamino(Node endNode) {
+        LinkedList<Point> camino = new LinkedList<>();
+        Node actual = endNode;
+        while (actual != null) {
+            camino.addFirst(actual.point);
+            actual = actual.parent;
+        }
+        return camino;
     }
 
     @Override
@@ -566,13 +394,15 @@ public class Sexagono implements IPlayer, IAuto {
         return "Sexagono";
     }
     
-    public class Node {
+    public static class Node {
         Point point; 
         int dist;    
+        Node parent;
 
         public Node(Point point, int dist) {
             this.point = point;
             this.dist = dist;
+            this.parent = null;
         }
 
         public Point getPoint() {
