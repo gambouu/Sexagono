@@ -239,10 +239,12 @@ public class Sexagono implements IPlayer, IAuto {
                 ESO PASA POR LA PUNTUACIÓN DE LOS BRIDGES EL RESTO PARECE QUE ESTA CORRECTO
                 
                 
-                HE MODIFICADO MÁS ABAJO PARA QUE SI LA PIEZA DEL BRIDGE ES DE NUESTRO COLOR NO LO CUENTE COMO BRIDGE
-                NO SE SI ESO ESTARA MUY MAL O SOLO MAL; PERO BUENO; NO VA 
+                HE MODIFICADO MÁS ABAJO PARA QUE SI LA PIEZA DEL BRIDGE (O QUE BLOQUEA EL BRIDGE) ES DE NUESTRO COLOR NO LO CUENTE COMO BRIDGE
+                NO SE SI ESO ESTARA MUY MAL O QUE; PERO BUENO; NO VA 
                 
                 SI VES QUE SE TE LIA MUCHO PILLA MI COMMIT DE AYER POR LA NOCHE
+                
+                EL BRIDGE DEBE PASAR A VALER 0 EN EL MOMENTO EN EL QUE ESTA CONECTADO; MIENTRAS NO LO ESTE DEBE VALER 1
                 */                
                     
                     if (cellStatus == s.getCurrentPlayerColor()) 
@@ -250,9 +252,6 @@ public class Sexagono implements IPlayer, IAuto {
                     else if (i >= numVecinos)
                         vecinoCost = 1;
                     else if (cellStatus == 0) 
-                        if(s.getPos(currentNode.getPoint()) == s.getCurrentPlayerColor())
-                            vecinoCost = 1;
-                        else
                             vecinoCost = 2;
 
                     else
