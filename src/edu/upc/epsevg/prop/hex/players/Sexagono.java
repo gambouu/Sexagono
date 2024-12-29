@@ -228,17 +228,32 @@ public class Sexagono implements IPlayer, IAuto {
             
             ArrayList<Point> vecinos = s.getNeigh(currentNode.point);
             int numVecinos = vecinos.size();
-            //int i = 0;
+            int i = 0;
             addBridges(s, vecinos, currentNode);
             for (Point vecino : vecinos) {
                 int vecinoCost = Integer.MAX_VALUE;
                 int cellStatus = s.getPos(vecino);
-                                
+                /*
+                CUANDO LA IA EMPIEZA A PONER LAS FICHAS ARRIBA A LA IZQUIERDA ES PORQUE DETECTA QUE EL CAMINO
+                MÁS CORTO YA ESTA HECHO Y POR TANTO DIJKSTRA SIEMPRE DA 0, 
+                ESO PASA POR LA PUNTUACIÓN DE LOS BRIDGES EL RESTO PARECE QUE ESTA CORRECTO
+                
+                
+                HE MODIFICADO MÁS ABAJO PARA QUE SI LA PIEZA DEL BRIDGE ES DE NUESTRO COLOR NO LO CUENTE COMO BRIDGE
+                NO SE SI ESO ESTARA MUY MAL O SOLO MAL; PERO BUENO; NO VA 
+                
+                SI VES QUE SE TE LIA MUCHO PILLA MI COMMIT DE AYER POR LA NOCHE
+                */                
+                    
                     if (cellStatus == s.getCurrentPlayerColor()) 
                         vecinoCost = 0; 
-
-                    else if (cellStatus == 0) 
+                    else if (i >= numVecinos)
                         vecinoCost = 1;
+                    else if (cellStatus == 0) 
+                        if(s.getPos(currentNode.getPoint()) == s.getCurrentPlayerColor())
+                            vecinoCost = 1;
+                        else
+                            vecinoCost = 2;
 
                     else
                         continue;
@@ -247,10 +262,11 @@ public class Sexagono implements IPlayer, IAuto {
                     if (newCost < distancias[vecino.x][vecino.y]) {
                         distancias[vecino.x][vecino.y] = newCost;
                         Node newNode = new Node(vecino, newCost);
-                        newNode.parent = currentNode; // Asignar el parent correctamente
-                        pQueue.add(newNode); // Añadirlo a la cola
+                        newNode.parent = currentNode;
+                        if (i < numVecinos) pQueue.add(newNode);
                     } 
                 }
+            i++;
         }
         
         return Integer.MAX_VALUE;
@@ -286,12 +302,12 @@ public class Sexagono implements IPlayer, IAuto {
 
         // Posibles bloqueos y sus puntos asociados
         int[][][] blocks = {
-            {{1, -1}},  // E, B
-            {{1, 0}},   // B, C
-            {{0, 1}},   // C, F
-            {{-1, 1}},  // F, A
-            {{-1, 0}},  // A, D
-            {{0, -1}}   // D, E
+            {{1, -1}, {1, -2}, {2, -1}},  // E, B
+            {{1, 0}, {2, -1}, {1, 1}},   // B, C
+            {{0, 1}, {1, 1}, {-1, 2}},   // C, F
+            {{-1, 1}, {-1, 2}, {-2, 1}}, // F, A
+            {{-1, 0}, {-2, 1}, {-1, -1}},// A, D
+            {{0, -1}, {-1, -1}, {1, -2}} // D, E
         };
 
         for (int i = 0; i < offsets.length; i++) {

@@ -19,21 +19,32 @@ public class UnitTesting {
     
     public static void main(String[] args) {
     
-        
-        byte[][] board = {
+        byte[][] board0 = {
+        //X   0  1  2  3  4  5  6  7  8
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0},                     // 0   Y
+             { 0, 0, 0, 0, 0, 0, 0, 0, 0},                    // 1
+               { 0, 0, 0, 0, 0, 0, 0, 0, 0},                  // 2
+                 { 0, 0, 0, 0, 0, 0, 0, 0, 0},                // 3
+                   { 0, 0, 0, 0, 0, 0, 0, 0, 0},              // 4  
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0},            // 5    
+                       { 0, 0, 0, 0, 0, 0, 0, 0, 0},          // 6      
+                         { 0, 0, 0, 0, 0, 0, 0, 0, 0},        // 7       
+                           { 0, 0, 0, 0, 0, 0, 0, 0, 0}       // 8    Y         
+        };
+        byte[][] board1 = {
         //X   0  1  2  3  4  5  6  7  8
             { 0, 0, 0, -1, 0, 0, 0, 0, 0},                     // 0   Y
              { 0, 0, 0, -1, 0, 0, 0, 0, 0},                    // 1
                { 0, 0, 0, -1, 0, 0, 0, 0, 0},                  // 2
                  { 0, 0, 0, -1, 0, 0, 0, 0, 0},                // 3
-                   { 0, -1, 0, -1, 0, 0, 0, 0, 0},              // 4  
+                   { 0, 0, 0, -1, 0, 0, 0, 0, 0},              // 4  
                      { 0, -1, 0, 0, 0, 0, 0, 0, 0},            // 5    
                        { 0, -1, 0, 0, 0, 0, 0, 0, 0},          // 6      
                          { 0, -1, 0, -1, 0, 0, 0, -1, 0},        // 7       
                            { 0, -1, 0, 0, 0, 0, 0, 0, 0}       // 8    Y         
         };
 
-        HexGameStatus gs = new HexGameStatus(board, PlayerType.PLAYER1);        
+        HexGameStatus gs = new HexGameStatus(board0, PlayerType.PLAYER1);        
         int result = Sexagono.dijkstra(gs, PlayerType.PLAYER1);
         System.out.println(result);
     }
