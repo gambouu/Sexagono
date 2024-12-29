@@ -153,13 +153,53 @@ public class Sexagono implements IPlayer, IAuto {
         PlayerType currentPlayer = s.getCurrentPlayer();
         PlayerType opponentPlayer = opposite(currentPlayer);
 
-        // Conectividad: Es la ruta más corta al destino
         int myDistance = dijkstra(s, currentPlayer);
         int opponentDistance = dijkstra(s, opponentPlayer);
-        int connectivityScore = opponentDistance - myDistance; // ESTA FUNCIONA
+        int connectivityScore = 2 * (opponentDistance - myDistance);
+
+        // Bloquear: Penalizar la expansión fácil del oponente
+        int opponentExpansion = 0;
+        for (int i = 0; i < s.getSize(); i++) {
+            for (int j = 0; j < s.getSize(); j++) {
+                Point p = new Point(i, j);
+                if (s.getPos(p) == getColor(opponentPlayer)) {
+                    opponentExpansion += s.getNeigh(p).size(); // Más vecinos disponibles, peor para nosotros
+                }
+            }
+        }
+        int blockScore = -opponentExpansion;
+
+        // Centro: Priorizar control del centro
+        int centerScore = 0;
+        int mid = s.getSize() / 2;
+        for (int i = 0; i < s.getSize(); i++) {
+            for (int j = 0; j < s.getSize(); j++) {
+                Point p = new Point(i, j);
+                if (s.getPos(p) == getColor(currentPlayer)) {
+                    int distanceToCenter = Math.abs(i - mid) + Math.abs(j - mid);
+                    centerScore += (s.getSize() - distanceToCenter); // Más cerca del centro, mejor
+                }
+            }
+        }
+
+        // Flexibilidad: Opciones de expansión para el siguiente turno
+        int flexibilityScore = 0;
+        for (int i = 0; i < s.getSize(); i++) {
+            for (int j = 0; j < s.getSize(); j++) {
+                Point p = new Point(i, j);
+                if (s.getPos(p) == getColor(currentPlayer)) {
+                    for (Point neighbor : s.getNeigh(p)) {
+                        if (s.getPos(neighbor) == 0) { // Casilla vacía
+                            flexibilityScore++;
+                        }
+                    }
+                }
+            }
+        }
 
         // Fórmula final de la heurística
-        return connectivityScore;
+        return (10 * connectivityScore) + (5 * blockScore) + (3 * centerScore) + (2 * flexibilityScore);
+
     }    
 
     public static int dijkstra(HexGameStatus s, PlayerType player) {
@@ -228,31 +268,17 @@ public class Sexagono implements IPlayer, IAuto {
             
             ArrayList<Point> vecinos = s.getNeigh(currentNode.point);
             int numVecinos = vecinos.size();
-            int i = 0;
+            //int i = 0;
             addBridges(s, vecinos, currentNode);
             for (Point vecino : vecinos) {
                 int vecinoCost = Integer.MAX_VALUE;
                 int cellStatus = s.getPos(vecino);
-                /*
-                CUANDO LA IA EMPIEZA A PONER LAS FICHAS ARRIBA A LA IZQUIERDA ES PORQUE DETECTA QUE EL CAMINO
-                MÁS CORTO YA ESTA HECHO Y POR TANTO DIJKSTRA SIEMPRE DA 0, 
-                ESO PASA POR LA PUNTUACIÓN DE LOS BRIDGES EL RESTO PARECE QUE ESTA CORRECTO
-                
-                
-                HE MODIFICADO MÁS ABAJO PARA QUE SI LA PIEZA DEL BRIDGE (O QUE BLOQUEA EL BRIDGE) ES DE NUESTRO COLOR NO LO CUENTE COMO BRIDGE
-                NO SE SI ESO ESTARA MUY MAL O QUE; PERO BUENO; NO VA 
-                
-                SI VES QUE SE TE LIA MUCHO PILLA MI COMMIT DE AYER POR LA NOCHE
-                
-                EL BRIDGE DEBE PASAR A VALER 0 EN EL MOMENTO EN EL QUE ESTA CONECTADO; MIENTRAS NO LO ESTE DEBE VALER 1
-                */                
-                    
+                                
                     if (cellStatus == s.getCurrentPlayerColor()) 
                         vecinoCost = 0; 
-                    else if (i >= numVecinos)
-                        vecinoCost = 1;
+
                     else if (cellStatus == 0) 
-                            vecinoCost = 2;
+                        vecinoCost = 1;
 
                     else
                         continue;
@@ -261,11 +287,10 @@ public class Sexagono implements IPlayer, IAuto {
                     if (newCost < distancias[vecino.x][vecino.y]) {
                         distancias[vecino.x][vecino.y] = newCost;
                         Node newNode = new Node(vecino, newCost);
-                        newNode.parent = currentNode;
-                        if (i < numVecinos) pQueue.add(newNode);
+                        newNode.parent = currentNode; // Asignar el parent correctamente
+                        pQueue.add(newNode); // Añadirlo a la cola
                     } 
                 }
-            i++;
         }
         
         return Integer.MAX_VALUE;
@@ -301,12 +326,12 @@ public class Sexagono implements IPlayer, IAuto {
 
         // Posibles bloqueos y sus puntos asociados
         int[][][] blocks = {
-            {{1, -1}, {1, -2}, {2, -1}},  // E, B
-            {{1, 0}, {2, -1}, {1, 1}},   // B, C
-            {{0, 1}, {1, 1}, {-1, 2}},   // C, F
-            {{-1, 1}, {-1, 2}, {-2, 1}}, // F, A
-            {{-1, 0}, {-2, 1}, {-1, -1}},// A, D
-            {{0, -1}, {-1, -1}, {1, -2}} // D, E
+            {{1, -1}},  // E, B
+            {{1, 0}},   // B, C
+            {{0, 1}},   // C, F
+            {{-1, 1}},  // F, A
+            {{-1, 0}},  // A, D
+            {{0, -1}}   // D, E
         };
 
         for (int i = 0; i < offsets.length; i++) {
