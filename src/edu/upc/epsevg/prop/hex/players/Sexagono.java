@@ -45,8 +45,7 @@ public class Sexagono implements IPlayer, IAuto {
         Point bestMove = null; 
                      
         myPlayer = s.getCurrentPlayer();
-        if (myPlayer == PlayerType.PLAYER1) otherPlayer = PlayerType.PLAYER2;
-        else otherPlayer = PlayerType.PLAYER1;
+        otherPlayer = opposite(myPlayer);
         
         if (!useTimeout) { 
             for (MoveNode move : moves) {
@@ -58,7 +57,6 @@ public class Sexagono implements IPlayer, IAuto {
                     return new PlayerMove(move.getPoint(), expandedNodes, MAX_DEPTH, SearchType.MINIMAX);
                 
                 int value = minimax(copiaTablero, MAX_DEPTH - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
-                //System.out.println(value);
 
                 if (value > bestValue || bestMove == null) {
                     bestValue = value;
@@ -79,7 +77,6 @@ public class Sexagono implements IPlayer, IAuto {
                         return new PlayerMove(move.getPoint(), expandedNodes, prof, SearchType.MINIMAX_IDS);
                                         
                     int value = minimax(copiaTablero, prof, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
-                    //System.out.println(value);
               
                     if (value > bestValue || bestMove == null) {
                         bestValue = value;
@@ -99,7 +96,7 @@ public class Sexagono implements IPlayer, IAuto {
         
         expandedNodes++;
    
-        if (timeout || depth == 0) 
+        if (depth == 0 || timeout) 
             return evaluateHeuristica(s); 
             
         List<MoveNode> moves = s.getMoves();
@@ -149,56 +146,12 @@ public class Sexagono implements IPlayer, IAuto {
     }
     
     private int evaluateHeuristica(HexGameStatus s) {
-        
-        PlayerType currentPlayer = s.getCurrentPlayer();
-        PlayerType opponentPlayer = opposite(currentPlayer);
 
-        int myDistance = dijkstra(s, currentPlayer);
-        int opponentDistance = dijkstra(s, opponentPlayer);
-        int connectivityScore = 2 * (opponentDistance - myDistance);
+        int myDistance = dijkstra(s, myPlayer);
+        int opponentDistance = dijkstra(s, otherPlayer);
+        int connectivityScore = 2 * opponentDistance - myDistance;
 
-        // Bloquear: Penalizar la expansión fácil del oponente
-        int opponentExpansion = 0;
-        for (int i = 0; i < s.getSize(); i++) {
-            for (int j = 0; j < s.getSize(); j++) {
-                Point p = new Point(i, j);
-                if (s.getPos(p) == getColor(opponentPlayer)) {
-                    opponentExpansion += s.getNeigh(p).size(); // Más vecinos disponibles, peor para nosotros
-                }
-            }
-        }
-        int blockScore = -opponentExpansion;
-
-        // Centro: Priorizar control del centro
-        int centerScore = 0;
-        int mid = s.getSize() / 2;
-        for (int i = 0; i < s.getSize(); i++) {
-            for (int j = 0; j < s.getSize(); j++) {
-                Point p = new Point(i, j);
-                if (s.getPos(p) == getColor(currentPlayer)) {
-                    int distanceToCenter = Math.abs(i - mid) + Math.abs(j - mid);
-                    centerScore += (s.getSize() - distanceToCenter); // Más cerca del centro, mejor
-                }
-            }
-        }
-
-        // Flexibilidad: Opciones de expansión para el siguiente turno
-        int flexibilityScore = 0;
-        for (int i = 0; i < s.getSize(); i++) {
-            for (int j = 0; j < s.getSize(); j++) {
-                Point p = new Point(i, j);
-                if (s.getPos(p) == getColor(currentPlayer)) {
-                    for (Point neighbor : s.getNeigh(p)) {
-                        if (s.getPos(neighbor) == 0) { // Casilla vacía
-                            flexibilityScore++;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Fórmula final de la heurística
-        return (10 * connectivityScore) + (5 * blockScore) + (3 * centerScore) + (2 * flexibilityScore);
+        return connectivityScore;
 
     }    
 
@@ -210,11 +163,11 @@ public class Sexagono implements IPlayer, IAuto {
         
         for (int i = 0; i < s.getSize(); i++) {
             for (int j = 0; j < s.getSize(); j++) {
-                distancias[i][j] = Integer.MAX_VALUE; // Inicializar con valor infinito
+                distancias[i][j] = Integer.MAX_VALUE;
             }
         }
 
-        if (player == PlayerType.PLAYER1) { // De izquierda a derecha
+        if (player == PlayerType.PLAYER1) {
             int pcolor = getColor(player);
             for (int i = 0; i < s.getSize(); i++) {
                 Point p = new Point(0, i);
@@ -223,13 +176,13 @@ public class Sexagono implements IPlayer, IAuto {
                     pQueue.add(new Node(p, 0));
                 }
                 else if (s.getPos(p) == 0) {
-                    distancias[0][i] = 1;
-                    pQueue.add(new Node(p, 1));
+                    distancias[0][i] = 2;
+                    pQueue.add(new Node(p, 2));
                 }
             }
         } 
                 
-        else { // De arriba a abajo
+        else {
             int pcolor = getColor(player);
             for (int i = 0; i < s.getSize(); i++) {
                 Point p = new Point(i, 0);
@@ -238,8 +191,8 @@ public class Sexagono implements IPlayer, IAuto {
                     pQueue.add(new Node(p, 0));
                 }
                 else if (s.getPos(p) == 0) {
-                    distancias[i][0] = 1;
-                    pQueue.add(new Node(p, 1));
+                    distancias[i][0] = 2;
+                    pQueue.add(new Node(p, 2));
                 }
             }
         }
@@ -247,7 +200,6 @@ public class Sexagono implements IPlayer, IAuto {
         while (!pQueue.isEmpty()) {
             
             Node currentNode = pQueue.poll();
-            //System.out.println(currentNode.dist);
             
             if (visitados[currentNode.getPoint().x][currentNode.getPoint().y] != null) 
                 continue;
@@ -255,42 +207,57 @@ public class Sexagono implements IPlayer, IAuto {
             visitados[currentNode.getPoint().x][currentNode.getPoint().y] = currentNode;
            
             if (player == PlayerType.PLAYER1 && currentNode.point.x == s.getSize() - 1) { 
-                //List<Point> path = reconstruirCamino(currentNode);
-                //System.out.println("Camino más corto: " + path);
                 return currentNode.dist;
             }
             
             else if (player == PlayerType.PLAYER2 && currentNode.point.y == s.getSize() - 1) {
-                //List<Point> path = reconstruirCamino(currentNode);
-                //System.out.println("Camino más corto: " + path);
                 return currentNode.dist;       
             }
             
             ArrayList<Point> vecinos = s.getNeigh(currentNode.point);
-            int numVecinos = vecinos.size();
-            //int i = 0;
-            addBridges(s, vecinos, currentNode);
+            ArrayList<Point> bridges = new ArrayList<>();
+            ArrayList<Point> intermediate = new ArrayList<>();
+            addBridges(s, bridges, currentNode);
+            int cellStatus;
+            for (Point bridge : bridges){
+
+                cellStatus = s.getPos(bridge);
+                if (cellStatus == s.getCurrentPlayerColor() && s.getPos(currentNode.getPoint()) == s.getCurrentPlayerColor()){
+                    addIntermediate(s, intermediate, currentNode.getPoint() ,bridge);
+                }
+            }
             for (Point vecino : vecinos) {
+                
                 int vecinoCost = Integer.MAX_VALUE;
-                int cellStatus = s.getPos(vecino);
-                                
+                cellStatus = s.getPos(vecino);
+                
+                if(intermediate.contains(vecino)){
+                
+                    vecinoCost = 1;
+                
+                }
+                else{
+                
                     if (cellStatus == s.getCurrentPlayerColor()) 
                         vecinoCost = 0; 
 
                     else if (cellStatus == 0) 
-                        vecinoCost = 1;
+                        vecinoCost = 2;
 
                     else
                         continue;
-                    
-                    int newCost = currentNode.dist + vecinoCost;
-                    if (newCost < distancias[vecino.x][vecino.y]) {
-                        distancias[vecino.x][vecino.y] = newCost;
-                        Node newNode = new Node(vecino, newCost);
-                        newNode.parent = currentNode; // Asignar el parent correctamente
-                        pQueue.add(newNode); // Añadirlo a la cola
-                    } 
+                
                 }
+                
+
+                int newCost = currentNode.dist + vecinoCost;
+                if (newCost < distancias[vecino.x][vecino.y]) {
+                    distancias[vecino.x][vecino.y] = newCost;
+                    Node newNode = new Node(vecino, newCost);
+                    newNode.parent = currentNode;
+                    pQueue.add(newNode);
+                } 
+            }
         }
         
         return Integer.MAX_VALUE;
@@ -317,7 +284,7 @@ public class Sexagono implements IPlayer, IAuto {
         // [x-1, y+1] --> F,A
         // [x-1, y] --> A,D
         // [x, y-1] --> D,E
-        // Si s.getPos(x,y) == -1; no añadir los puntos bloqueados
+        // Si s.getPos(x,y) == -1; no aÃ±adir los puntos bloqueados
 
         // Posiciones relativas de los bridges (A, B, C, D, E, F)
         int[][] offsets = {
@@ -359,6 +326,28 @@ public class Sexagono implements IPlayer, IAuto {
             }
         }
     }
+    
+    private static void addIntermediate(HexGameStatus s, ArrayList<Point> intermediates, Point p1, Point p2) {
+        // Obtener vecinos de cada punto
+        ArrayList<Point> neighborsP1 = s.getNeigh(p1);
+        ArrayList<Point> neighborsP2 = s.getNeigh(p2);
+
+        // Buscar vecinos comunes
+        int i = 0;
+        for (Point n1 : neighborsP1) {
+            if (s.getPos(n1) == -1)
+                continue;
+            if (i == 2) break;
+            for (Point n2 : neighborsP2) {
+                // Si los puntos vecinos son iguales, aÃ±Ã¡delos a la lista
+                if (n1.equals(n2)) {
+                    intermediates.add(n1);
+                    ++i;
+                }
+            }
+        }
+    }
+
 
     private static List<Point> reconstruirCamino(Node endNode) {
         LinkedList<Point> camino = new LinkedList<>();

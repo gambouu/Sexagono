@@ -34,7 +34,7 @@ public class Game {
                 
                 IPlayer player4 = new RandomPlayer("Pepe"); 
                                 
-                new Board(player4,player2, 11 /*mida*/,  10/*s*/, false);
+                new Board(player2,player1, 11 /*mida*/,  10/*s*/, false);
              }
         });
     }
