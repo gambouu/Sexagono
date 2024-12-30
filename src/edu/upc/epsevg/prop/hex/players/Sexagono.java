@@ -16,6 +16,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 
+/**
+ * Clase que representa el jugador "Sexagono".
+ */
 public class Sexagono implements IPlayer, IAuto {
 
     private int MAX_DEPTH;
@@ -25,16 +28,32 @@ public class Sexagono implements IPlayer, IAuto {
     private PlayerType myPlayer;
     private PlayerType otherPlayer;
     
+    
+    /**
+    * Constructor del jugador Sexagono.
+    *
+    * @param depth       Profundidad máxima para el algoritmo MiniMax.
+    * @param useTimeout  Indica si se debe utilizar control de tiempo.
+    */
     public Sexagono(int depth, boolean useTimeout) {
         this.MAX_DEPTH = depth;
         this.useTimeout = useTimeout;
     }
-
+    
+    /**
+     * Maneja el evento de timeout.
+     */
     @Override
     public void timeout() {
         if(useTimeout) timeout = !timeout;
     }
-
+    
+    /**
+     * Realiza un movimiento basado en el estado actual del tablero.
+     *
+     * @param s Estado actual del juego.
+     * @return Movimiento calculado para el jugador.
+     */
     @Override
     public PlayerMove move(HexGameStatus s) {
        
@@ -91,7 +110,17 @@ public class Sexagono implements IPlayer, IAuto {
         timeout = false;
         return new PlayerMove(bestMove, expandedNodes, MAX_DEPTH, useTimeout ? SearchType.MINIMAX_IDS: SearchType.MINIMAX);
     }
-
+    
+    /**
+     * Implementación del algoritmo MiniMax con poda alfa-beta.
+     *
+     * @param s            Estado del tablero.
+     * @param depth        Profundidad actual.
+     * @param alpha        Valor alfa para la poda.
+     * @param beta         Valor beta para la poda.
+     * @param isMaximizing Indica si es el turno del jugador maximizador.
+     * @return Valor calculado por el algoritmo.
+     */
     private int minimax(HexGameStatus s, int depth, int alpha, int beta, boolean isMaximizing) {
         
         expandedNodes++;
@@ -145,6 +174,12 @@ public class Sexagono implements IPlayer, IAuto {
         }
     }
     
+    /**
+     * Evalúa heurísticamente el estado actual del tablero.
+     *
+     * @param s Estado del tablero.
+     * @return Valor heurístico del estado.
+     */    
     private int evaluateHeuristica(HexGameStatus s) {
 
         int myDistance = dijkstra(s, myPlayer);
@@ -153,8 +188,15 @@ public class Sexagono implements IPlayer, IAuto {
 
         return connectivityScore;
 
-    }    
-
+    }
+    
+    /**
+     * Calcula la distancia mínima utilizando el algoritmo de Dijkstra.
+     *
+     * @param s      Estado del tablero.
+     * @param player Jugador para el cual se calcula la distancia.
+     * @return Distancia mínima.
+     */
     public static int dijkstra(HexGameStatus s, PlayerType player) {
         
         int[][] distancias = new int[s.getSize()][s.getSize()];
@@ -264,6 +306,13 @@ public class Sexagono implements IPlayer, IAuto {
         
     }
     
+    /**
+     * Añade posibles puentes al conjunto de puntos considerados.
+     *
+     * @param s            Estado del tablero.
+     * @param bridges      Lista donde se añaden los puentes.
+     * @param currentNode  Nodo actual del tablero.
+     */
     private static void addBridges(HexGameStatus s, ArrayList<Point> bridges, Node currentNode) {
         int x = currentNode.getPoint().x;
         int y = currentNode.getPoint().y;
@@ -327,19 +376,24 @@ public class Sexagono implements IPlayer, IAuto {
         }
     }
     
+    /**
+     * Añade puntos intermedios entre dos nodos conectados por un puente.
+     *
+     * @param s           Estado del tablero.
+     * @param intermediates Lista donde se añaden los puntos intermedios.
+     * @param p1          Punto inicial.
+     * @param p2          Punto final.
+     */
     private static void addIntermediate(HexGameStatus s, ArrayList<Point> intermediates, Point p1, Point p2) {
-        // Obtener vecinos de cada punto
         ArrayList<Point> neighborsP1 = s.getNeigh(p1);
         ArrayList<Point> neighborsP2 = s.getNeigh(p2);
 
-        // Buscar vecinos comunes
         int i = 0;
         for (Point n1 : neighborsP1) {
             if (s.getPos(n1) == -1)
                 continue;
             if (i == 2) break;
             for (Point n2 : neighborsP2) {
-                // Si los puntos vecinos son iguales, aÃ±Ã¡delos a la lista
                 if (n1.equals(n2)) {
                     intermediates.add(n1);
                     ++i;
@@ -348,37 +402,50 @@ public class Sexagono implements IPlayer, IAuto {
         }
     }
 
-
-    private static List<Point> reconstruirCamino(Node endNode) {
-        LinkedList<Point> camino = new LinkedList<>();
-        Node actual = endNode;
-        while (actual != null) {
-            camino.addFirst(actual.point);
-            actual = actual.parent;
-        }
-        return camino;
-    }
-
+    /**
+     * Devuelve el nombre del jugador.
+     *
+     * @return Nombre del jugador.
+     */
     @Override
     public String getName() {
         return "Sexagono";
     }
     
+    /**
+     * Clase auxiliar que representa un nodo en el tablero.
+     */
     public static class Node {
         Point point; 
         int dist;    
         Node parent;
 
+        /**
+        * Constructor de un nodo.
+        *
+        * @param point Coordenadas del nodo.
+        * @param dist  Distancia acumulada al nodo.
+        */
         public Node(Point point, int dist) {
             this.point = point;
             this.dist = dist;
             this.parent = null;
         }
 
+        /**
+         * Devuelve las coordenadas del nodo.
+         *
+         * @return Coordenadas del nodo.
+        */
         public Point getPoint() {
             return point;
         }
-
+        
+        /**
+         * Devuelve la distancia acumulada al nodo.
+         *
+         * @return Distancia acumulada al nodo.
+         */
         public int getDist() {
             return dist;
         }

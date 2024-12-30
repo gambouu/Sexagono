@@ -38,7 +38,7 @@ public class HeadlessGame {
 
         IPlayer player4 = new RandomPlayer("Pepe");                 
         
-        HeadlessGame game = new HeadlessGame(player2, player4, 11, 10/*s timeout*/, 10/*games*/);
+        HeadlessGame game = new HeadlessGame(player2, player4, 9, 5/*s timeout*/, 10/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);
 
