@@ -1,3 +1,17 @@
+/**
+ * Clase Sexagono que implementa un jugador para el juego Hex.
+ * Utiliza el algoritmo Minimax con poda Alpha-Beta e Iterative Deepening Search (IDS) 
+ * para encontrar el mejor movimiento posible.
+ * 
+ * Proporciona funcionalidades como heurísticas basadas en Dijkstra, 
+ * evaluación de conectividad y detección de puentes e intermedios para mejorar la búsqueda.
+ * 
+ * Implementa las interfaces IPlayer e IAuto.
+ * 
+ * @author Marc Gamboa
+ * @author Andreu Pino
+ */
+
 package edu.upc.epsevg.prop.hex.players;
 
 import edu.upc.epsevg.prop.hex.HexGameStatus;
@@ -25,6 +39,13 @@ public class Sexagono implements IPlayer, IAuto {
     private PlayerType myPlayer;
     private PlayerType otherPlayer;
     
+    
+    /**
+     * Constructor del jugador Sexagono.
+     * 
+     * @param depth Profundidad máxima inicial para la búsqueda Minimax.
+     * @param useTimeout Indica si se debe usar límite de tiempo.
+    */
     public Sexagono(int depth, boolean useTimeout) {
         this.MAX_DEPTH = depth;
         this.useTimeout = useTimeout;
@@ -35,6 +56,13 @@ public class Sexagono implements IPlayer, IAuto {
         if(useTimeout) timeout = !timeout;
     }
 
+    
+    /**
+     * Realiza el movimiento del jugador en función del estado actual del juego.
+     * 
+     * @param s Estado actual del juego.
+     * @return PlayerMove El movimiento seleccionado.
+     */
     @Override
     public PlayerMove move(HexGameStatus s) {
        
@@ -93,6 +121,16 @@ public class Sexagono implements IPlayer, IAuto {
         return new PlayerMove(bestMove, expandedNodes, MAX_DEPTH, useTimeout ? SearchType.MINIMAX_IDS: SearchType.MINIMAX);
     }
 
+    /**
+     * Algoritmo Minimax con poda Alpha-Beta.
+     * 
+     * @param s Estado actual del juego.
+     * @param depth Profundidad restante.
+     * @param alpha Valor alfa para poda.
+     * @param beta Valor beta para poda.
+     * @param isMaximizing Indica si es el turno del jugador maximizador.
+     * @return Valor heurístico del estado.
+     */
     private int minimax(HexGameStatus s, int depth, int alpha, int beta, boolean isMaximizing) {
         
         expandedNodes++;
@@ -146,6 +184,12 @@ public class Sexagono implements IPlayer, IAuto {
         }
     }
     
+    /**
+     * Evalúa heurísticamente el estado del tablero.
+     * 
+     * @param s Estado actual del juego.
+     * @return Valor heurístico.
+     */
     private int evaluateHeuristica(HexGameStatus s) {
 
         int myDistance = dijkstra(s, myPlayer);
@@ -157,6 +201,14 @@ public class Sexagono implements IPlayer, IAuto {
 
     }    
 
+    
+    /**
+     * Calcula la distancia más corta usando Dijkstra para evaluar el tablero.
+     * 
+     * @param s Estado del tablero.
+     * @param player Jugador para el cálculo.
+     * @return Distancia más corta.
+     */
     public static int dijkstra(HexGameStatus s, PlayerType player) {
         
         int[][] distancias = new int[s.getSize()][s.getSize()];
@@ -260,7 +312,7 @@ public class Sexagono implements IPlayer, IAuto {
                 if (newCost < distancias[vecino.x][vecino.y]) {
                     distancias[vecino.x][vecino.y] = newCost;
                     Node newNode = new Node(vecino, newCost);
-                    newNode.parent = currentNode;
+                    //newNode.parent = currentNode;
                     pQueue.add(newNode);
                 } 
             }
@@ -370,6 +422,10 @@ public class Sexagono implements IPlayer, IAuto {
         return "Sexagono";
     }
     
+    
+    /**
+     * Clase interna para representar nodos en la búsqueda.
+     */
     public static class Node {
         Point point; 
         int dist;    
